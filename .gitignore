@@ -131,3 +131,6 @@ dist
 
 # Loval variable from direnv
 .envrc
+
+# VSCode configuration
+Quotes\ API.code-workspace
