@@ -109,7 +109,7 @@ app.get('/quote(s?)/random', (req, res) => {
   sendResponse(res, 200, pickRandomFrom(filtered) || {});
 });
 
-app.get('/qod/:tag', (req, res) => {
+app.get('/qod/:tag?', (req, res) => {
   // Update quotes of the day when day changes
   if (
     qod.date.getFullYear() !== new Date().getFullYear()
@@ -129,7 +129,7 @@ app.get('/qod/:tag', (req, res) => {
       life: 'Quotes of the day about life',
       humor: 'Humor quotes of the day',
       books: 'Quotes of the day about books',
-    }[req.params.tag] || '',
+    }[req.params.tag || 'all'] || '',
     quote,
     author,
     tags,
