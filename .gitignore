@@ -134,3 +134,4 @@ dist
 
 # VSCode configuration
 Quotes\ API.code-workspace
+.vercel

@@ -8,7 +8,7 @@ const __filename = fileURLToPath(import.meta.url);
 // eslint-disable-next-line no-underscore-dangle
 const __dirname = dirname(__filename);
 const app = express();
-const PORT = process.env.PORT || 8000;
+const PORT = process.env.PORT || 3000;
 const DATASET = path.resolve(__dirname, 'src/datasets/quotes.jsonl');
 const quotes = readJSONL(DATASET);
 
@@ -171,3 +171,5 @@ app.use(/^\/(help|docs|api)/, express.static('src/docs'));
 app.listen(PORT, () => {
   console.log('\x1b[33m%s\x1b[0m', `Server running on port: ${PORT}`);
 });
+
+export default app;
