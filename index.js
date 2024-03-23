@@ -104,7 +104,7 @@ app.get('/tags/popularity', (req, res) => {
   );
 });
 
-app.get('/quote(s?)/random', (req, res) => {
+app.get('/quotes?/random', (req, res) => {
   const filtered = filter(quotes, req.query);
   sendResponse(res, 200, pickRandomFrom(filtered) || {});
 });
@@ -138,11 +138,33 @@ app.get('/qod/:tag?', (req, res) => {
   return sendResponse(res, 200, data);
 });
 
+function searchQuotesBy(category, queries) {
+  const queriesArray = queries.split(/\s+/);
+  const result = [];
+
+  queriesArray.forEach((query) => result.push(...quotes
+    .filter((item) => (item[category] instanceof Array
+      ? item[category].includes(query)
+      : item[category].match(new RegExp(query, 'i'))
+    ))));
+
+  return result;
+}
+
+app.get('/search(/quotes?)?', (req, res) => {
+  const result = searchQuotesBy('quote', req.query.q);
+
+  sendResponse(res, 200, result);
+});
+
 // eslint-disable-next-line no-unused-vars
 app.use((req, res, next) => sendResponse(res, 404));
 
 // eslint-disable-next-line no-unused-vars
-app.use((err, req, res, next) => sendResponse(res, 500));
+app.use((err, req, res, next) => {
+  sendResponse(res, 500);
+  console.log(err);
+});
 
 app.use(/^\/(help|docs|api)/, express.static('src/docs'));
 
