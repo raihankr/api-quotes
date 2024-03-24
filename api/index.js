@@ -1,7 +1,12 @@
 import express from 'express';
 import { fileURLToPath } from 'url';
 import path, { dirname } from 'path';
+import { readFileSync } from 'fs';
+import { marked } from 'marked';
+import { gfmHeadingId } from 'marked-gfm-heading-id';
 import readJSONL from './src/utils/read-jsonl.js';
+
+marked.use(gfmHeadingId());
 
 // eslint-disable-next-line no-underscore-dangle
 const __filename = fileURLToPath(import.meta.url);
@@ -11,6 +16,9 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const DATASET = path.resolve(__dirname, 'src/datasets/quotes.jsonl');
 const quotes = readJSONL(DATASET);
+const docs = marked(
+  readFileSync(path.resolve(__dirname, '../README.md')).toString(),
+);
 
 function filter(data, opt) {
   const {
@@ -84,15 +92,15 @@ app.get('/', (req, res) => {
   res.redirect(303, '/docs');
 });
 
-app.get('/authors', (req, res) => {
+app.get('/api/authors', (req, res) => {
   sendResponse(res, 200, Array.from(authors));
 });
 
-app.get('/tags', (req, res) => {
+app.get('/api/tags', (req, res) => {
   sendResponse(res, 200, Array.from(tags));
 });
 
-app.get('/tags/popularity', (req, res) => {
+app.get('/api/tags/popularity', (req, res) => {
   const quotesCount = {};
   quotes.forEach((quote) => quote.tags.forEach((tag) => {
     quotesCount[tag] = quotesCount[tag] ? quotesCount[tag] + 1 : 1;
@@ -104,12 +112,12 @@ app.get('/tags/popularity', (req, res) => {
   );
 });
 
-app.get('/quotes?/random', (req, res) => {
+app.get('/api/random', (req, res) => {
   const filtered = filter(quotes, req.query);
   sendResponse(res, 200, pickRandomFrom(filtered) || {});
 });
 
-app.get('/qod/:tag?', (req, res) => {
+app.get('/api/qod/:tag?', (req, res) => {
   // Update quotes of the day when day changes
   if (
     qod.date.getFullYear() !== new Date().getFullYear()
@@ -138,23 +146,44 @@ app.get('/qod/:tag?', (req, res) => {
   return sendResponse(res, 200, data);
 });
 
-function searchQuotesBy(category, queries) {
-  const queriesArray = queries.split(/\s+/);
+function searchQuotesBy(category, query) {
   const result = [];
 
-  queriesArray.forEach((query) => result.push(...quotes
+  result.push(...quotes
     .filter((item) => (item[category] instanceof Array
       ? item[category].includes(query)
       : item[category].match(new RegExp(query, 'i'))
-    ))));
+    )));
 
   return result;
 }
 
-app.get('/search(/quotes?)?', (req, res) => {
-  const result = searchQuotesBy('quote', req.query.q);
+app.get('/api/search(/quotes?)?/:quote', (req, res) => {
+  const result = searchQuotesBy('quote', req.params.quote);
 
-  sendResponse(res, 200, result);
+  return result.length === 0
+    ? sendResponse(res, 404)
+    : sendResponse(res, 200, result);
+});
+
+app.get('/api/search/author/:author', (req, res) => {
+  const result = searchQuotesBy('author', req.params.author);
+
+  return result.length === 0
+    ? sendResponse(res, 404)
+    : sendResponse(res, 200, result);
+});
+
+app.get('/api/search/tag/:tag', (req, res) => {
+  const result = searchQuotesBy('tag', req.params.tag);
+
+  return result.length === 0
+    ? sendResponse(res, 404)
+    : sendResponse(res, 303, result);
+});
+
+app.use(/^\/(help|docs|api)/, (req, res) => {
+  res.send(docs);
 });
 
 // eslint-disable-next-line no-unused-vars
@@ -165,8 +194,6 @@ app.use((err, req, res, next) => {
   sendResponse(res, 500);
   console.log(err);
 });
-
-app.use(/^\/(help|docs|api)/, express.static('src/docs'));
 
 app.listen(PORT, () => {
   console.log('\x1b[33m%s\x1b[0m', `Server running on port: ${PORT}`);
