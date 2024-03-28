@@ -159,7 +159,9 @@ function searchQuotesBy(category, query) {
 }
 
 app.get('/api/search(/quotes?)?/:quote', (req, res) => {
-  const result = searchQuotesBy('quote', req.params.quote);
+  let result = searchQuotesBy('quote', req.params.quote);
+
+  result = filter(result, req.query);
 
   return result.length === 0
     ? sendResponse(res, 404)
@@ -167,7 +169,9 @@ app.get('/api/search(/quotes?)?/:quote', (req, res) => {
 });
 
 app.get('/api/search/author/:author', (req, res) => {
-  const result = searchQuotesBy('author', req.params.author);
+  let result = searchQuotesBy('author', req.params.author);
+
+  result = filter(result, req.query);
 
   return result.length === 0
     ? sendResponse(res, 404)
@@ -175,7 +179,9 @@ app.get('/api/search/author/:author', (req, res) => {
 });
 
 app.get('/api/search/tag/:tag', (req, res) => {
-  const result = searchQuotesBy('tag', req.params.tag);
+  let result = searchQuotesBy('tag', req.params.tag);
+
+  result = filter(result, req.query);
 
   return result.length === 0
     ? sendResponse(res, 404)
