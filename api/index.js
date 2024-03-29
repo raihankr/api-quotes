@@ -1,12 +1,7 @@
 import express from 'express';
 import { fileURLToPath } from 'url';
 import path, { dirname } from 'path';
-import { readFileSync } from 'fs';
-import { marked } from 'marked';
-import { gfmHeadingId } from 'marked-gfm-heading-id';
 import readJSONL from './src/utils/read-jsonl.js';
-
-marked.use(gfmHeadingId());
 
 // eslint-disable-next-line no-underscore-dangle
 const __filename = fileURLToPath(import.meta.url);
@@ -16,9 +11,6 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const DATASET = path.resolve(__dirname, 'src/datasets/quotes.jsonl');
 const quotes = readJSONL(DATASET);
-const docs = marked(
-  readFileSync(path.resolve(__dirname, '../README.md')).toString(),
-);
 
 function filter(data, opt) {
   const {
@@ -151,7 +143,7 @@ function searchQuotesBy(category, query) {
 
   result.push(...quotes
     .filter((item) => (item[category] instanceof Array
-      ? item[category].includes(query)
+      ? item[category].toString().match(new RegExp(query, 'i'))
       : item[category].match(new RegExp(query, 'i'))
     )));
 
@@ -179,17 +171,17 @@ app.get('/api/search/author/:author', (req, res) => {
 });
 
 app.get('/api/search/tag/:tag', (req, res) => {
-  let result = searchQuotesBy('tag', req.params.tag);
+  let result = searchQuotesBy('tags', req.params.tag);
 
   result = filter(result, req.query);
 
   return result.length === 0
     ? sendResponse(res, 404)
-    : sendResponse(res, 303, result);
+    : sendResponse(res, 200, result);
 });
 
-app.use(/^\/(help|docs|api)/, (req, res) => {
-  res.send(docs);
+app.use(/^\/(help|docs)/, (req, res) => {
+  res.sendFile(path.resolve(__dirname, '../README.html'));
 });
 
 // eslint-disable-next-line no-unused-vars
