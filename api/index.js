@@ -2,6 +2,7 @@ import express from 'express';
 import { fileURLToPath } from 'url';
 import path, { dirname } from 'path';
 import readJSONL from './src/utils/read-jsonl.js';
+import cors from './src/utils/cors.js';
 
 // eslint-disable-next-line no-underscore-dangle
 const __filename = fileURLToPath(import.meta.url);
@@ -79,6 +80,8 @@ quotes.forEach((item) => {
   authors.add(item.author);
   item.tags.forEach((tag) => tags.add(tag));
 });
+
+app.use(cors);
 
 app.get('/', (req, res) => {
   res.redirect(303, '/docs');
